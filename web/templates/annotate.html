@@ -1,0 +1,68 @@
+<!--
+annotate.html - Direct upload to Amazon S3 using signed POST request
+-->
+
+{% extends "base.html" %}
+
+{% block title %}Annotate{% endblock %}
+
+{% block body %}
+
+    {% include "header.html" %}
+
+    <div class="container">
+    
+        <div class="page-header">
+            <h1>Annotate VCF File</h1>
+        </div>
+
+        <div class="form-wrapper">
+            <form role="form" action="{{ s3_post.url }}" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                {% for key, value in s3_post.fields.items() %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}" />
+                {% endfor %}
+
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label for="upload">Select VCF Input File</label>
+                        <div class="input-group col-md-12">
+                            <span class="input-group-btn">
+                                <span class="btn btn-default btn-file btn-lg">Browse&hellip; <input type="file" name="file" id="upload-file" /></span>
+                            </span>
+                            <input type="text" class="form-control col-md-6 input-lg" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <br />
+
+                <div class="form-actions">
+                    <input class="btn btn-lg btn-primary" type="submit" value="Annotate" id="annotateButton" />
+                </div>
+            </form>
+        </div>
+
+        <script>
+            // JS interacting with files: https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_applications
+            document.getElementById('upload-file').addEventListener('change', function() {
+                // Add JS code to prevent input files larger than 150K for free users
+                // Check if the user is a free user
+                var userType = "{{ role }}";
+                // Check file size
+                var size = this.files[0].size / 1024; 
+                if (userType === "free_user" && size > 150) {
+                    // Pop up alert if file size exceeded limit and the user is not a Premium user
+                    // JS popup alert: https://www.w3schools.com/js/js_popup.asp
+                    alert('File size exceeds 150KB, please subscribe as Premium user.');
+                    this.value = "";  
+                }
+                // Add JS code to disable submit button if file is not selected
+                // JS disable button: https://www.w3schools.com/jsref/prop_pushbutton_disabled.asp
+                document.getElementById('annotateButton').disabled = !this.value;
+            });
+        </script>
+    
+    </div> <!-- container -->
+
+{% endblock %}
